@@ -10,7 +10,9 @@ const secretWish = document.querySelector("#secret-wish");
 const lightCards = [...document.querySelectorAll(".light-card")];
 const progressLights = [...document.querySelectorAll("#light-progress i")];
 const animalCards = [...document.querySelectorAll(".animal-card")];
+const animalRow = document.querySelector(".animal-row");
 const committeeMessage = document.querySelector("#committee-message");
+const animalMobileQuery = window.matchMedia("(max-width: 900px)");
 const friendshipReel = document.querySelector("#friendship-reel");
 const reelSlides = [...document.querySelectorAll(".reel-slide")];
 const reelPlay = document.querySelector("#reel-play");
@@ -181,6 +183,14 @@ lightCards.forEach((card, index) => {
   });
 });
 
+function placeCommitteeMessage(card = null) {
+  if (animalMobileQuery.matches && card) {
+    card.insertAdjacentElement("afterend", committeeMessage);
+    return;
+  }
+  animalRow.insertAdjacentElement("afterend", committeeMessage);
+}
+
 animalCards.forEach((card) => {
   card.addEventListener("click", () => {
     animalCards.forEach((item) => {
@@ -189,11 +199,19 @@ animalCards.forEach((card) => {
     });
     card.classList.add("chosen");
     card.setAttribute("aria-pressed", "true");
+    placeCommitteeMessage(card);
     committeeMessage.querySelector("p").textContent = card.dataset.message;
     committeeMessage.classList.remove("pop");
     void committeeMessage.offsetWidth;
     committeeMessage.classList.add("pop");
+    if (animalMobileQuery.matches) {
+      window.setTimeout(() => committeeMessage.scrollIntoView({ behavior: "smooth", block: "nearest" }), 80);
+    }
   });
+});
+
+animalMobileQuery.addEventListener("change", () => {
+  placeCommitteeMessage(document.querySelector(".animal-card.chosen"));
 });
 
 envelope.addEventListener("click", () => {
@@ -222,6 +240,7 @@ document.querySelector("#replay-button").addEventListener("click", () => {
     card.classList.remove("chosen");
     card.setAttribute("aria-pressed", "false");
   });
+  placeCommitteeMessage();
   committeeMessage.querySelector("p").textContent = "Choose a tiny messenger to read its note.";
   committeeMessage.classList.remove("pop");
   document.querySelector("#light-progress").setAttribute("aria-label", "0 of 3 wishes revealed");
