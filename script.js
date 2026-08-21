@@ -14,12 +14,12 @@ const committeeMessage = document.querySelector("#committee-message");
 const friendshipReel = document.querySelector("#friendship-reel");
 const reelSlides = [...document.querySelectorAll(".reel-slide")];
 const reelPlay = document.querySelector("#reel-play");
+const friendshipAudio = document.querySelector("#friendship-audio");
 
 let audioContext = null;
 let soundTimer = null;
 let reelTimer = null;
 let reelEndTimer = null;
-let scoreNodes = [];
 
 for (let index = 0; index < 24; index += 1) {
   const star = document.createElement("i");
@@ -69,68 +69,61 @@ function stopFriendshipReel() {
   if (reelEndTimer !== null) window.clearTimeout(reelEndTimer);
   reelTimer = null;
   reelEndTimer = null;
-  scoreNodes.forEach((node) => {
-    try { node.stop(); } catch {}
-    try { node.disconnect(); } catch {}
-  });
-  scoreNodes = [];
+  friendshipAudio.pause();
+  try { friendshipAudio.currentTime = 0; } catch {}
   friendshipReel.classList.remove("playing");
   reelPlay.setAttribute("aria-pressed", "false");
   reelPlay.querySelector("span").textContent = "Play our little reel";
 }
 
-function playFriendshipScore() {
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) return;
-  audioContext ||= new AudioContextClass();
-  if (audioContext.state === "suspended") audioContext.resume();
-  const chords = [
-    [261.63, 329.63, 392], [220, 261.63, 329.63], [174.61, 220, 261.63], [196, 246.94, 293.66],
-    [261.63, 329.63, 392], [220, 261.63, 329.63], [174.61, 220, 261.63], [196, 261.63, 392],
-  ];
-  const start = audioContext.currentTime + 0.08;
-  chords.forEach((chord, chordIndex) => {
-    chord.forEach((frequency, noteIndex) => {
-      const oscillator = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      const noteStart = start + chordIndex * 2.75;
-      oscillator.type = noteIndex === 0 ? "sine" : "triangle";
-      oscillator.frequency.value = frequency;
-      gain.gain.setValueAtTime(0.0001, noteStart);
-      gain.gain.exponentialRampToValueAtTime(noteIndex === 0 ? 0.012 : 0.005, noteStart + 0.45);
-      gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 2.7);
-      oscillator.connect(gain).connect(audioContext.destination);
-      oscillator.start(noteStart);
-      oscillator.stop(noteStart + 2.75);
-      scoreNodes.push(oscillator);
-    });
-  });
+async function getFriendshipAudioDuration() {
+  if (friendshipAudio.readyState < 1) {
+    await Promise.race([
+      new Promise((resolve) => friendshipAudio.addEventListener("loadedmetadata", resolve, { once: true })),
+      new Promise((resolve) => window.setTimeout(resolve, 2500)),
+    ]);
+  }
+  return Number.isFinite(friendshipAudio.duration) && friendshipAudio.duration > 1
+    ? friendshipAudio.duration
+    : 22;
 }
 
-function startFriendshipReel() {
+async function startFriendshipReel() {
   stopFriendshipReel();
   stopChime();
+  const duration = await getFriendshipAudioDuration();
+  const durationMs = duration * 1000;
+  const slideDuration = durationMs / reelSlides.length;
+  friendshipReel.style.setProperty("--reel-duration", `${duration}s`);
   reelSlides.forEach((slide, index) => slide.classList.toggle("active", index === 0));
   void friendshipReel.offsetWidth;
   friendshipReel.classList.add("playing");
   reelPlay.setAttribute("aria-pressed", "true");
   reelPlay.querySelector("span").textContent = "Playing our story…";
-  playFriendshipScore();
+  friendshipAudio.currentTime = 0;
+  friendshipAudio.volume = 0.82;
+  try {
+    await friendshipAudio.play();
+  } catch {
+    friendshipReel.classList.remove("playing");
+    reelPlay.setAttribute("aria-pressed", "false");
+    reelPlay.querySelector("span").textContent = "Tap again to play with audio";
+    return;
+  }
   let activeIndex = 0;
   reelTimer = window.setInterval(() => {
     activeIndex += 1;
     if (activeIndex >= reelSlides.length) return;
     reelSlides.forEach((slide, index) => slide.classList.toggle("active", index === activeIndex));
-  }, 4400);
+  }, slideDuration);
   reelEndTimer = window.setTimeout(() => {
     if (reelTimer !== null) window.clearInterval(reelTimer);
     reelTimer = null;
     reelEndTimer = null;
-    scoreNodes = [];
     friendshipReel.classList.remove("playing");
     reelPlay.setAttribute("aria-pressed", "false");
     reelPlay.querySelector("span").textContent = "Replay our little reel";
-  }, 22000);
+  }, durationMs);
 }
 
 function createSparkBurst(event) {

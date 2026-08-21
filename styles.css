@@ -282,7 +282,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
 .film-grain { position: absolute; z-index: 7; inset: -30%; opacity: .11; pointer-events: none; background-image: radial-gradient(circle, #fff 0 1px, transparent 1.4px), radial-gradient(circle, #000 0 1px, transparent 1.4px); background-size: 9px 9px, 13px 13px; animation: grain-shift .35s steps(2) infinite; mix-blend-mode: overlay; }
 .reel-progress { position: absolute; z-index: 12; left: 7%; right: 7%; top: 5%; height: 2px; overflow: hidden; background: rgba(255,255,255,.28); }
 .reel-progress i { display: block; width: 0; height: 100%; background: #fff3df; box-shadow: 0 0 8px #fff; }
-.friendship-reel.playing .reel-progress i { animation: reel-timeline 22s linear forwards; }
+.friendship-reel.playing .reel-progress i { animation: reel-timeline var(--reel-duration, 22s) linear forwards; }
 .reel-play { position: absolute; z-index: 15; left: 50%; bottom: 2.3%; display: flex; align-items: center; gap: .7rem; min-width: 205px; justify-content: center; padding: .78rem 1.2rem; transform: translateX(-50%); border: 1px solid rgba(255,255,255,.35); border-radius: 100px; color: #fff9ef; background: rgba(18,9,7,.63); backdrop-filter: blur(12px); cursor: pointer; font: .65rem Arial, sans-serif; letter-spacing: .1em; text-transform: uppercase; transition: background .3s ease, transform .3s ease; }
 .reel-play:hover { transform: translateX(-50%) translateY(-3px); background: rgba(116,59,35,.72); }
 .reel-play b { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: #3b1f15; background: #f2c7a5; font-size: .65rem; }
