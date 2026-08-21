@@ -9,6 +9,8 @@ const letter = document.querySelector("#open-letter");
 const secretWish = document.querySelector("#secret-wish");
 const lightCards = [...document.querySelectorAll(".light-card")];
 const progressLights = [...document.querySelectorAll("#light-progress i")];
+const animalCards = [...document.querySelectorAll(".animal-card")];
+const committeeMessage = document.querySelector("#committee-message");
 
 let audioContext = null;
 let soundTimer = null;
@@ -56,6 +58,29 @@ function playChime() {
   soundLabel.textContent = "Sound on";
 }
 
+function createSparkBurst(event) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const button = event.currentTarget;
+  const rect = button.getBoundingClientRect();
+  const x = event.clientX || rect.left + rect.width / 2;
+  const y = event.clientY || rect.top + rect.height / 2;
+  const burst = document.createElement("span");
+  burst.className = "spark-burst";
+  burst.style.setProperty("--spark-x", `${x}px`);
+  burst.style.setProperty("--spark-y", `${y}px`);
+  burst.style.setProperty("--spark-color", button.classList.contains("animal-card") ? "#a94869" : "#e9b65c");
+  for (let index = 0; index < 8; index += 1) {
+    const spark = document.createElement("i");
+    spark.style.setProperty("--n", index);
+    spark.textContent = index % 2 === 0 ? "✦" : "♡";
+    burst.append(spark);
+  }
+  document.body.append(burst);
+  window.setTimeout(() => burst.remove(), 800);
+}
+
+document.querySelectorAll("button").forEach((button) => button.addEventListener("click", createSparkBurst));
+
 document.querySelector("#open-surprise").addEventListener("click", () => {
   curtain.hidden = true;
   experience.hidden = false;
@@ -80,6 +105,21 @@ lightCards.forEach((card, index) => {
   });
 });
 
+animalCards.forEach((card) => {
+  card.addEventListener("click", () => {
+    animalCards.forEach((item) => {
+      item.classList.remove("chosen");
+      item.setAttribute("aria-pressed", "false");
+    });
+    card.classList.add("chosen");
+    card.setAttribute("aria-pressed", "true");
+    committeeMessage.querySelector("p").textContent = card.dataset.message;
+    committeeMessage.classList.remove("pop");
+    void committeeMessage.offsetWidth;
+    committeeMessage.classList.add("pop");
+  });
+});
+
 envelope.addEventListener("click", () => {
   envelope.classList.add("opened");
   envelope.setAttribute("aria-label", "Birthday note opened");
@@ -99,6 +139,12 @@ document.querySelector("#replay-button").addEventListener("click", () => {
     card.querySelector("strong").textContent = "A little wish is hiding here.";
     progressLights[index].classList.remove("found");
   });
+  animalCards.forEach((card) => {
+    card.classList.remove("chosen");
+    card.setAttribute("aria-pressed", "false");
+  });
+  committeeMessage.querySelector("p").textContent = "Choose a tiny messenger to read its note.";
+  committeeMessage.classList.remove("pop");
   document.querySelector("#light-progress").setAttribute("aria-label", "0 of 3 wishes revealed");
   experience.hidden = true;
   curtain.hidden = false;
