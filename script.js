@@ -25,6 +25,7 @@ const sceneChoices = [...document.querySelectorAll(".scene-choice")];
 const meetingTicket = document.querySelector("#meeting-ticket");
 const meetingTitle = document.querySelector("#meeting-title");
 const meetingResult = document.querySelector("#meeting-result");
+const openWhenCards = [...document.querySelectorAll(".open-when-card")];
 
 let audioContext = null;
 let soundTimer = null;
@@ -257,6 +258,15 @@ sceneChoices.forEach((choice) => {
   });
 });
 
+openWhenCards.forEach((card) => {
+  card.addEventListener("click", () => {
+    const willOpen = !card.classList.contains("opened");
+    card.classList.toggle("opened", willOpen);
+    card.setAttribute("aria-pressed", String(willOpen));
+    card.querySelector(".open-when-message").setAttribute("aria-hidden", String(!willOpen));
+  });
+});
+
 envelope.addEventListener("click", () => {
   envelope.classList.add("opened");
   envelope.setAttribute("aria-label", "Birthday note opened");
@@ -300,6 +310,11 @@ document.querySelector("#replay-button").addEventListener("click", () => {
   });
   meetingTicket.hidden = true;
   meetingTicket.classList.remove("arrive-again");
+  openWhenCards.forEach((card) => {
+    card.classList.remove("opened");
+    card.setAttribute("aria-pressed", "false");
+    card.querySelector(".open-when-message").setAttribute("aria-hidden", "true");
+  });
   document.querySelector("#light-progress").setAttribute("aria-label", "0 of 3 wishes revealed");
   experience.hidden = true;
   curtain.hidden = false;
