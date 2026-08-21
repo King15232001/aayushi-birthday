@@ -17,6 +17,14 @@ const friendshipReel = document.querySelector("#friendship-reel");
 const reelSlides = [...document.querySelectorAll(".reel-slide")];
 const reelPlay = document.querySelector("#reel-play");
 const friendshipAudio = document.querySelector("#friendship-audio");
+const flowerChoices = [...document.querySelectorAll(".flower-choice")];
+const bouquetBlooms = [...document.querySelectorAll(".bouquet-bloom")];
+const flowerNote = document.querySelector("#flower-note");
+const bouquetComplete = document.querySelector("#bouquet-complete");
+const sceneChoices = [...document.querySelectorAll(".scene-choice")];
+const meetingTicket = document.querySelector("#meeting-ticket");
+const meetingTitle = document.querySelector("#meeting-title");
+const meetingResult = document.querySelector("#meeting-result");
 
 let audioContext = null;
 let soundTimer = null;
@@ -214,6 +222,41 @@ animalMobileQuery.addEventListener("change", () => {
   placeCommitteeMessage(document.querySelector(".animal-card.chosen"));
 });
 
+flowerChoices.forEach((choice) => {
+  choice.addEventListener("click", () => {
+    const flower = choice.dataset.flower;
+    choice.classList.add("picked");
+    choice.setAttribute("aria-pressed", "true");
+    bouquetBlooms.find((bloom) => bloom.dataset.flower === flower)?.classList.add("active");
+    flowerNote.querySelector("p").textContent = choice.dataset.note;
+    flowerNote.classList.remove("changed");
+    void flowerNote.offsetWidth;
+    flowerNote.classList.add("changed");
+    const picked = flowerChoices.filter((item) => item.classList.contains("picked")).length;
+    if (picked === flowerChoices.length) bouquetComplete.hidden = false;
+  });
+});
+
+sceneChoices.forEach((choice) => {
+  choice.addEventListener("click", () => {
+    sceneChoices.forEach((item) => {
+      item.classList.remove("chosen");
+      item.setAttribute("aria-pressed", "false");
+    });
+    choice.classList.add("chosen");
+    choice.setAttribute("aria-pressed", "true");
+    meetingTitle.textContent = choice.dataset.title;
+    meetingResult.textContent = choice.dataset.result;
+    meetingTicket.hidden = false;
+    meetingTicket.classList.remove("arrive-again");
+    void meetingTicket.offsetWidth;
+    meetingTicket.classList.add("arrive-again");
+    if (window.matchMedia("(max-width: 900px)").matches) {
+      window.setTimeout(() => meetingTicket.scrollIntoView({ behavior: "smooth", block: "nearest" }), 80);
+    }
+  });
+});
+
 envelope.addEventListener("click", () => {
   envelope.classList.add("opened");
   envelope.setAttribute("aria-label", "Birthday note opened");
@@ -243,6 +286,20 @@ document.querySelector("#replay-button").addEventListener("click", () => {
   placeCommitteeMessage();
   committeeMessage.querySelector("p").textContent = "Choose a tiny messenger to read its note.";
   committeeMessage.classList.remove("pop");
+  flowerChoices.forEach((choice) => {
+    choice.classList.remove("picked");
+    choice.setAttribute("aria-pressed", "false");
+  });
+  bouquetBlooms.forEach((bloom) => bloom.classList.remove("active"));
+  flowerNote.querySelector("p").textContent = "Choose the first flower for your bouquet.";
+  flowerNote.classList.remove("changed");
+  bouquetComplete.hidden = true;
+  sceneChoices.forEach((choice) => {
+    choice.classList.remove("chosen");
+    choice.setAttribute("aria-pressed", "false");
+  });
+  meetingTicket.hidden = true;
+  meetingTicket.classList.remove("arrive-again");
   document.querySelector("#light-progress").setAttribute("aria-label", "0 of 3 wishes revealed");
   experience.hidden = true;
   curtain.hidden = false;
