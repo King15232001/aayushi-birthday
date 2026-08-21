@@ -11,9 +11,15 @@ const lightCards = [...document.querySelectorAll(".light-card")];
 const progressLights = [...document.querySelectorAll("#light-progress i")];
 const animalCards = [...document.querySelectorAll(".animal-card")];
 const committeeMessage = document.querySelector("#committee-message");
+const friendshipReel = document.querySelector("#friendship-reel");
+const reelSlides = [...document.querySelectorAll(".reel-slide")];
+const reelPlay = document.querySelector("#reel-play");
 
 let audioContext = null;
 let soundTimer = null;
+let reelTimer = null;
+let reelEndTimer = null;
+let scoreNodes = [];
 
 for (let index = 0; index < 24; index += 1) {
   const star = document.createElement("i");
@@ -58,6 +64,75 @@ function playChime() {
   soundLabel.textContent = "Sound on";
 }
 
+function stopFriendshipReel() {
+  if (reelTimer !== null) window.clearInterval(reelTimer);
+  if (reelEndTimer !== null) window.clearTimeout(reelEndTimer);
+  reelTimer = null;
+  reelEndTimer = null;
+  scoreNodes.forEach((node) => {
+    try { node.stop(); } catch {}
+    try { node.disconnect(); } catch {}
+  });
+  scoreNodes = [];
+  friendshipReel.classList.remove("playing");
+  reelPlay.setAttribute("aria-pressed", "false");
+  reelPlay.querySelector("span").textContent = "Play our little reel";
+}
+
+function playFriendshipScore() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+  audioContext ||= new AudioContextClass();
+  if (audioContext.state === "suspended") audioContext.resume();
+  const chords = [
+    [261.63, 329.63, 392], [220, 261.63, 329.63], [174.61, 220, 261.63], [196, 246.94, 293.66],
+    [261.63, 329.63, 392], [220, 261.63, 329.63], [174.61, 220, 261.63], [196, 261.63, 392],
+  ];
+  const start = audioContext.currentTime + 0.08;
+  chords.forEach((chord, chordIndex) => {
+    chord.forEach((frequency, noteIndex) => {
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      const noteStart = start + chordIndex * 2.75;
+      oscillator.type = noteIndex === 0 ? "sine" : "triangle";
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.0001, noteStart);
+      gain.gain.exponentialRampToValueAtTime(noteIndex === 0 ? 0.012 : 0.005, noteStart + 0.45);
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 2.7);
+      oscillator.connect(gain).connect(audioContext.destination);
+      oscillator.start(noteStart);
+      oscillator.stop(noteStart + 2.75);
+      scoreNodes.push(oscillator);
+    });
+  });
+}
+
+function startFriendshipReel() {
+  stopFriendshipReel();
+  stopChime();
+  reelSlides.forEach((slide, index) => slide.classList.toggle("active", index === 0));
+  void friendshipReel.offsetWidth;
+  friendshipReel.classList.add("playing");
+  reelPlay.setAttribute("aria-pressed", "true");
+  reelPlay.querySelector("span").textContent = "Playing our story…";
+  playFriendshipScore();
+  let activeIndex = 0;
+  reelTimer = window.setInterval(() => {
+    activeIndex += 1;
+    if (activeIndex >= reelSlides.length) return;
+    reelSlides.forEach((slide, index) => slide.classList.toggle("active", index === activeIndex));
+  }, 4400);
+  reelEndTimer = window.setTimeout(() => {
+    if (reelTimer !== null) window.clearInterval(reelTimer);
+    reelTimer = null;
+    reelEndTimer = null;
+    scoreNodes = [];
+    friendshipReel.classList.remove("playing");
+    reelPlay.setAttribute("aria-pressed", "false");
+    reelPlay.querySelector("span").textContent = "Replay our little reel";
+  }, 22000);
+}
+
 function createSparkBurst(event) {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const button = event.currentTarget;
@@ -88,8 +163,16 @@ document.querySelector("#open-surprise").addEventListener("click", () => {
   window.scrollTo({ top: 0 });
 });
 
-soundToggle.addEventListener("click", () => soundTimer === null ? playChime() : stopChime());
+soundToggle.addEventListener("click", () => {
+  if (soundTimer === null) {
+    stopFriendshipReel();
+    playChime();
+  } else {
+    stopChime();
+  }
+});
 document.querySelector("#story-button").addEventListener("click", () => document.querySelector("#memories").scrollIntoView({ behavior: "smooth" }));
+reelPlay.addEventListener("click", startFriendshipReel);
 
 lightCards.forEach((card, index) => {
   card.addEventListener("click", () => {
@@ -128,6 +211,9 @@ envelope.addEventListener("click", () => {
 
 document.querySelector("#replay-button").addEventListener("click", () => {
   stopChime();
+  stopFriendshipReel();
+  reelSlides.forEach((slide, index) => slide.classList.toggle("active", index === 0));
+  reelPlay.querySelector("span").textContent = "Play our little reel";
   envelope.classList.remove("opened");
   envelope.setAttribute("aria-label", "Open the birthday note");
   letter.hidden = true;
